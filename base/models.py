@@ -19,6 +19,7 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)    
     employee = models.ForeignKey(User, on_delete=models.CASCADE)
     duration = models.DecimalField(decimal_places=2, max_digits=1000)
+    project = models.ForeignKey("base.Project", on_delete=models.SET_NULL, null = True, blank = True)
 
     def __str__(self):
         return self.body[0:20]
@@ -39,5 +40,13 @@ class Department(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     admin = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, related_name="department_admin")
 
+    def __str__(self):
+        return self.name
+
+
+class Project(models.Model):
+    name = models.CharField(max_length=100)
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null =True, blank = True)
+    
     def __str__(self):
         return self.name

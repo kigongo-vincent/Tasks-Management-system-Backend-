@@ -20,3 +20,8 @@ class DepartmentSerializer(ModelSerializer):
     class Meta:
         model = Department
         fields = "__all__"
+
+class ProjectSerializer(ModelSerializer):
+    class Meta:
+        model = Project
+        fields = "__all__"
