@@ -16,5 +16,7 @@ urlpatterns=[
     path('tasks/<str:pk>', views.tasks),
     path('get_company/<str:pk>', views.get_company),
     path('get_department/<str:pk>', views.get_department),
-    path('update_user/<str:pk>', views.update_user)
+    path('update_user/<str:pk>', views.update_user),
+    path('projects/<str:pk>', views.projects),
+    path('project/<str:pk>', views.project)
 ]

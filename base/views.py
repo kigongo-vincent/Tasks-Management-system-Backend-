@@ -283,6 +283,46 @@ def user(request, pk):
     except:    
         return Response(status = status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['GET', 'POST'])
+def projects(request, pk):
+
+    if request.method == "POST":
+        request.data["admin"] =pk
+        serialized = ProjectSerializer(data = request.data)
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data,status = status.HTTP_201_CREATED)
+
+    projects = Project.objects.filter(admin = pk)
+    serialized = ProjectSerializer(projects, many = True)
+    return Response(serialized.data)
+
+
+
+@api_view(['PATCH', 'DELETE'])
+def project(request, pk):
+    try:
+        project = Project.objects.get(id = pk)
+    except:
+        project = None
+
+    if project is None:
+        return Response(status = status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        project.delete()
+        return Response(status = status.HTTP_202_ACCEPTED)
+
+    if request.method == "PATCH":
+        serialized = ProjectSerializer(project, data = request.data, partial = True)
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data,status = status.HTTP_202_ACCEPTED)
+
+
+
+
 ''''
 apis needed
 
