@@ -21,7 +21,7 @@ class Task(models.Model):
     created_at = models.DateField(auto_now_add=True)    
     updated_at = models.DateField(auto_now=True)    
     employee = models.ForeignKey(User, on_delete=models.CASCADE)
-    duration = models.DecimalField(decimal_places=2, max_digits=1000)
+    duration = models.DecimalField(decimal_places=2, max_digits=60)
     project = models.ForeignKey("base.Project", on_delete=models.SET_NULL, null = True, blank = True)
 
     class Meta:
