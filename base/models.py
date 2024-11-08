@@ -12,14 +12,20 @@ class User(AbstractUser):
     REQUIRED_FIELDS=['username'] # must be added to avoid complications when creating the super user
     USERNAME_FIELD = "email"
 
+    class Meta:
+        ordering = ["-date_joined"]
+
 
 class Task(models.Model):
     body = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)    
-    updated_at = models.DateTimeField(auto_now=True)    
+    created_at = models.DateField(auto_now_add=True)    
+    updated_at = models.DateField(auto_now=True)    
     employee = models.ForeignKey(User, on_delete=models.CASCADE)
     duration = models.DecimalField(decimal_places=2, max_digits=1000)
     project = models.ForeignKey("base.Project", on_delete=models.SET_NULL, null = True, blank = True)
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.body[0:20]
@@ -29,6 +35,9 @@ class Company(models.Model):
     admin = models.OneToOneField(User, on_delete=models.CASCADE, related_name="company_admin")
     created_at = models.DateTimeField(auto_now_add=True)    
     updated_at = models.DateTimeField(auto_now=True) 
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.name
@@ -40,13 +49,17 @@ class Department(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     admin = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, related_name="department_admin")
 
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self):
         return self.name
 
 
 class Project(models.Model):
     name = models.CharField(max_length=100)
-    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null =True, blank = True)
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null =True, blank = True)
+    
     
     def __str__(self):
         return self.name

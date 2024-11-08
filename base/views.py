@@ -63,6 +63,8 @@ def company(request, pk):
         company_head = User.objects.get(id = company.admin.id)
 
         if request.method == "PATCH":
+            print(request.data)
+            
             serialized = CompanySerializer(company, data = request.data, partial = True)
             if serialized.is_valid():
                 serialized.save()
@@ -262,12 +264,15 @@ def get_department(request, pk):
 def update_user(request, pk):
     try:
         user = User.objects.get(id = pk)
-        if request.data["password"]:
-            request.data["password"] = make_password(request.data["password"])
+        try:
+            if request.data["password"]:
+                request.data["password"] = make_password(request.data["password"])
+        except:
+            pass        
         serialized = UserSerializer(user, data = request.data, partial= True)
         if serialized.is_valid():
             serialized.save()
-            return Response(status.HTTP_202_ACCEPTED)
+            return Response(serialized.data)
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
     except:
@@ -288,13 +293,13 @@ def user(request, pk):
 def projects(request, pk):
 
     if request.method == "POST":
-        request.data["admin"] =pk
+        request.data["company"] =pk
         serialized = ProjectSerializer(data = request.data)
         if serialized.is_valid():
             serialized.save()
             return Response(serialized.data,status = status.HTTP_201_CREATED)
 
-    projects = Project.objects.filter(admin = pk)
+    projects = Project.objects.filter(company = pk)
     serialized = ProjectSerializer(projects, many = True)
     return Response(serialized.data)
 
