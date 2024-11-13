@@ -25,6 +25,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         token['contact'] = user.contact
 
+        try:
+            token['company'] = user.department.company.id
+        except: 
+            token['company'] = None
+
         return token
     
 
@@ -302,7 +307,6 @@ def projects(request, pk):
     projects = Project.objects.filter(company = pk)
     serialized = ProjectSerializer(projects, many = True)
     return Response(serialized.data)
-
 
 
 @api_view(['PATCH', 'DELETE'])

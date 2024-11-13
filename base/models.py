@@ -17,6 +17,7 @@ class User(AbstractUser):
 
 
 class Task(models.Model):
+    title = models.CharField(max_length = 100, null = True, blank = True) #change this in production to avoid null characters
     body = models.TextField()
     created_at = models.DateField(auto_now_add=True)    
     updated_at = models.DateField(auto_now=True)    

@@ -1,7 +1,8 @@
-from rest_framework.serializers import ModelSerializer, CharField, EmailField
+from rest_framework.serializers import ModelSerializer, CharField, EmailField, IntegerField
 from .models import *
 
 class UserSerializer(ModelSerializer):
+    company = IntegerField(source= "department.company.id", read_only = True)
     class Meta:
         model = User
         fields = "__all__"
