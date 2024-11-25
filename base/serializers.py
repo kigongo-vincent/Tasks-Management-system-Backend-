@@ -9,6 +9,9 @@ class UserSerializer(ModelSerializer):
 
 class CompanySerializer(ModelSerializer):
     admin_email = EmailField(source = "admin.email", read_only = True)
+    admin_first_name = EmailField(source = "admin.first_name", read_only = True)
+    admin_last_name = EmailField(source = "admin.last_name", read_only = True)
+    admin_contact = EmailField(source = "admin.contact", read_only = True)
     class Meta:
         model = Company
         fields = "__all__"
@@ -21,6 +24,9 @@ class TaskSerializer(ModelSerializer):
         
 class DepartmentSerializer(ModelSerializer):
     admin_email = EmailField(source = "admin.email", read_only = True)
+    admin_first_name = EmailField(source = "admin.first_name", read_only = True)
+    admin_last_name = EmailField(source = "admin.last_name", read_only = True)
+    admin_contact = EmailField(source = "admin.contact", read_only = True)
     class Meta:
         model = Department
         fields = "__all__"
