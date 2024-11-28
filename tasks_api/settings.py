@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-o8p7rc3v@l)o1s0f-_jd^1+6=2qn(_#ek$sv$h202z&g39a*9*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'tasks_api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# JWT AUTH SETTINGS 
+# JWT AUTH SETTINGS
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -129,8 +129,11 @@ SIMPLE_JWT = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'tekjuice$tasks_v3',
+        'USERNAME': 'tekjuice',
+        'HOST': 'tekjuice.mysql.pythonanywhere-services.com',
+        'PASSWORD': 'vincent2002'
     }
 }
 
@@ -168,14 +171,14 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+import os
 
+STATIC_URL = '/staticfiles/'
 
-STATIC_URL = 'staticfiles/'
-
-STATIC_ROOT = 'staticfiles/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_DIRS = [
-    BASE_DIR
+    os.path.join(BASE_DIR, 'static')
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
