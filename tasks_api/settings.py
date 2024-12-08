@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-o8p7rc3v@l)o1s0f-_jd^1+6=2qn(_#ek$sv$h202z&g39a*9*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -127,15 +127,25 @@ SIMPLE_JWT = {
 	}
 
 
-DATABASES = {
+if DEBUG == False:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'tekjuice$tasks_v3',
+            'USERNAME': 'tekjuice',
+            'HOST': 'tekjuice.mysql.pythonanywhere-services.com',
+            'PASSWORD': 'vincent2002'
+        }
+    }
+
+else:
+    DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tekjuice$tasks_v3',
-        'USERNAME': 'tekjuice',
-        'HOST': 'tekjuice.mysql.pythonanywhere-services.com',
-        'PASSWORD': 'vincent2002'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+    
 
 
 # Password validation
@@ -182,6 +192,13 @@ STATICFILES_DIRS = [
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER ="kigongovincent81@gmail.com"
+EMAIL_HOST_PASSWORD = "tpdx tffh rlet tovc"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer, CharField, EmailField, IntegerField
+from rest_framework import serializers
 from .models import *
 
 class UserSerializer(ModelSerializer):
@@ -36,3 +37,20 @@ class ProjectSerializer(ModelSerializer):
     class Meta:
         model = Project
         fields = "__all__"
+
+# pending 
+class TaskSummarySerializer(serializers.Serializer):
+    date = serializers.DateField()  # The date for daily, weekly, or monthly
+    task_count = serializers.IntegerField()  # The count of tasks
+    total_duration = serializers.FloatField()  # The total duration of tasks
+
+class EmployeeTaskSummarySerializer(serializers.Serializer):
+    employee_id = serializers.IntegerField()  # Employee ID
+    employee_name = serializers.CharField()  # Employee name
+    department_name = serializers.CharField()  # Department name
+    daily_tasks = TaskSummarySerializer(many=True)  # List of daily task summaries
+    weekly_tasks = TaskSummarySerializer(many=True)  # List of weekly task summaries
+    monthly_tasks = TaskSummarySerializer(many=True)  # List of monthly task summaries
+
+    
+# end pending 
