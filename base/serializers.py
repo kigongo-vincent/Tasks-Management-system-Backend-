@@ -22,6 +22,14 @@ class TaskSerializer(ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
+
+class LoggerSerializer(ModelSerializer):
+    first_name = CharField(source="user.first_name", read_only = True)
+    last_name = CharField(source="user.last_name", read_only = True)
+    email = CharField(source="user.email", read_only = True)
+    class Meta:
+        model = Logger
+        fields = "__all__"
         
 class DepartmentSerializer(ModelSerializer):
     admin_email = EmailField(source = "admin.email", read_only = True)

@@ -8,6 +8,7 @@ from rest_framework import status
 from django.contrib.auth.hashers import make_password
 from django.db.models import Q
 from datetime import datetime
+from .utils import generate_task_change_action
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -124,25 +125,53 @@ def department(request, pk):
 
 @api_view(['PATCH', 'DELETE', 'GET'])
 def task(request, pk):
-
     try:
-        task =Task.objects.get(id = pk)
+        task = Task.objects.get(id=pk)
 
         if request.method == "PATCH":
-            serialized = TaskSerializer(task, data = request.data, partial = True)
+            # Get old task data before saving the update
+            old_task = TaskSerializer(task).data
+
+            # Serialize the request data (partial update)
+            serialized = TaskSerializer(task, data=request.data, partial=True)
+
             if serialized.is_valid():
+                # Save the changes to the task in the database
                 serialized.save()
-                return Response(serialized.data, status=status.HTTP_202_ACCEPTED)
+
+                # Reload the updated task from the database to get the latest data
+                task.refresh_from_db()
+                new_task = TaskSerializer(task).data
+
+                # Print the changes to debug
+                print(generate_task_change_action(old_task, new_task))
+
+                # Log the change action
+                Logger.objects.create(
+                    action=generate_task_change_action(old_task, new_task),
+                    user=User.objects.get(id=task.employee.id)
+                )
+
+                print(f"old: {old_task}\nnew: {new_task}")
+                return Response(new_task, status=status.HTTP_202_ACCEPTED)
             else:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
 
         elif request.method == "DELETE":
+            old_task = task.title
             task.delete()
+            Logger.objects.create(
+                action=f"Task titled '{old_task}' has been removed from the system",
+                user=User.objects.get(id=task.employee.id)
+            )
             return Response(status=status.HTTP_202_ACCEPTED)
+
         elif request.method == "GET":
             serialized = TaskSerializer(task)
             return Response(serialized.data)
-    except:
+
+    except Exception as e:
+        print(e)
         return Response(status=status.HTTP_418_IM_A_TEAPOT)
 
 
@@ -637,3 +666,11 @@ def export_data_and_send_email(request):
     except Exception as e:
         # Handle any errors and return an error response
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+# create logs     
+@api_view(['GET'])
+def logs(request, pk):
+    logs = Logger.objects.filter(user__department__company__id = pk)
+    serialized = LoggerSerializer(logs, many = True)
+    return Response(serialized.data)
