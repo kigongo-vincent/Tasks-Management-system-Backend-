@@ -1,7 +1,11 @@
+asgiref==3.8.1
 Django==5.1.2
 django-cors-headers==4.5.0
 django-resized==1.0.3
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
-pillow
-# mysqlclient
+et_xmlfile==2.0.0
+openpyxl==3.1.5
+pillow==11.2.1
+PyJWT==2.10.1
+sqlparse==0.5.3
