@@ -27,5 +27,5 @@ urlpatterns=[
     path('cron_job/', views.cron_job),
     path('backup/', views.export_data_and_send_email),
     path('tasks_logs/<str:pk>', views.logs),
-    
+    path('department_monthly_report/<str:pk>', views.department_monthly_report),
 ]

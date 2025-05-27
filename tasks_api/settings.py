@@ -127,24 +127,25 @@ SIMPLE_JWT = {
 	}
 
 
-if DEBUG == False:
+if DEBUG:
+    # Use SQLite for development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    # Use MySQL for production
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'tekjuice$tasks_v3',
-            'USERNAME': 'tekjuice',
+            'USER': 'tekjuice',  # Changed from USERNAME to USER as per Django's convention
             'HOST': 'tekjuice.mysql.pythonanywhere-services.com',
             'PASSWORD': 'vincent2002'
         }
     }
-
-else:
-    DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
     
 
 

@@ -9,6 +9,10 @@ from django.contrib.auth.hashers import make_password
 from django.db.models import Q
 from datetime import datetime
 from .utils import generate_task_change_action
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+from django.db.models import Sum
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -143,14 +147,16 @@ def task(request, pk):
                 task.refresh_from_db()
                 new_task = TaskSerializer(task).data
 
-                # Print the changes to debug
-                print(generate_task_change_action(old_task, new_task))
+                # Only create logs for non-drafted tasks
+                if not task.drafted:
+                    # Print the changes to debug
+                    print(generate_task_change_action(old_task, new_task))
 
-                # Log the change action
-                Logger.objects.create(
-                    action=generate_task_change_action(old_task, new_task),
-                    user=User.objects.get(id=task.employee.id)
-                )
+                    # Log the change action
+                    Logger.objects.create(
+                        action=generate_task_change_action(old_task, new_task),
+                        user=User.objects.get(id=task.employee.id)
+                    )
 
                 print(f"old: {old_task}\nnew: {new_task}")
                 return Response(new_task, status=status.HTTP_202_ACCEPTED)
@@ -159,11 +165,13 @@ def task(request, pk):
 
         elif request.method == "DELETE":
             old_task = task.title
+            # Only create logs for non-drafted tasks
+            if not task.drafted:
+                Logger.objects.create(
+                    action=f"Task titled '{old_task}' has been removed from the system",
+                    user=User.objects.get(id=task.employee.id)
+                )
             task.delete()
-            Logger.objects.create(
-                action=f"Task titled '{old_task}' has been removed from the system",
-                user=User.objects.get(id=task.employee.id)
-            )
             return Response(status=status.HTTP_202_ACCEPTED)
 
         elif request.method == "GET":
@@ -371,6 +379,10 @@ def task_grouping(request, pk):
         month = date_now.month  # Extract the current month
         day = date_now.day  # Extract today's day
 
+        # Calculate previous month and year
+        prev_month = month - 1 if month > 1 else 12
+        prev_year = year if month > 1 else year - 1
+
         # get all employees in the company
         employees = User.objects.filter(
             Q(department__company__id=pk)
@@ -407,6 +419,10 @@ def task_grouping(request, pk):
                 "task_count": 0,
                 "total_duration": 0
             }
+            previous_month_tasks = {
+                "task_count": 0,
+                "total_duration": 0
+            }
 
             # loop over tasks for a given employee
             for task in tasks:
@@ -432,10 +448,16 @@ def task_grouping(request, pk):
                         monthly_tasks["task_count"] += 1
                         monthly_tasks["total_duration"] += task.duration
 
+                # generate previous month tasks
+                if task_year == prev_year and task_month == prev_month:
+                    previous_month_tasks["task_count"] += 1
+                    previous_month_tasks["total_duration"] += task.duration
+
             # Add statistics to user data
             user_data["daily_tasks"] = daily_tasks
             user_data["monthly_tasks"] = monthly_tasks
             user_data["weekly_tasks"] = weekly_tasks
+            user_data["previous_month_tasks"] = previous_month_tasks
 
             result.append(user_data)
 
@@ -455,6 +477,10 @@ def task_grouping_by_department(request, pk):
         year, week, _ = date_now.isocalendar()  # Extract year and week from today's date
         month = date_now.month  # Extract the current month
         day = date_now.day  # Extract today's day
+
+        # Calculate previous month and year
+        prev_month = month - 1 if month > 1 else 12
+        prev_year = year if month > 1 else year - 1
 
         # get all employees in the department
         employees = User.objects.filter(
@@ -492,6 +518,10 @@ def task_grouping_by_department(request, pk):
                 "task_count": 0,
                 "total_duration": 0
             }
+            previous_month_tasks = {
+                "task_count": 0,
+                "total_duration": 0
+            }
 
             # loop over tasks for a given employee
             for task in tasks:
@@ -517,10 +547,16 @@ def task_grouping_by_department(request, pk):
                         monthly_tasks["task_count"] += 1
                         monthly_tasks["total_duration"] += task.duration
 
+                # generate previous month tasks
+                if task_year == prev_year and task_month == prev_month:
+                    previous_month_tasks["task_count"] += 1
+                    previous_month_tasks["total_duration"] += task.duration
+
             # Add statistics to user data
             user_data["daily_tasks"] = daily_tasks
             user_data["monthly_tasks"] = monthly_tasks
             user_data["weekly_tasks"] = weekly_tasks
+            user_data["previous_month_tasks"] = previous_month_tasks
 
             result.append(user_data)
 
@@ -671,6 +707,96 @@ def export_data_and_send_email(request):
 # create logs     
 @api_view(['GET'])
 def logs(request, pk):
-    logs = Logger.objects.filter(user__department__company__id = pk)
-    serialized = LoggerSerializer(logs, many = True)
+    logs = Logger.objects.filter(user__department__company__id=pk).order_by('-created_at')[:10]
+    serialized = LoggerSerializer(logs, many=True)
     return Response(serialized.data)
+
+@api_view(['GET'])
+def department_monthly_report(request, pk):
+    try:
+        # Get current month and year
+        current_date = datetime.today()
+        current_month = current_date.month
+        current_year = current_date.year
+
+        # Get all employees in the department
+        employees = User.objects.filter(
+            department__id=pk,
+            role='employee'
+        )
+
+        # Create a new workbook and select the active sheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"Monthly Report {current_date.strftime('%B %Y')}"
+
+        # Define styles
+        header_font = Font(bold=True, size=12)
+        header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        center_aligned = Alignment(horizontal='center', vertical='center')
+
+        # Set column widths
+        ws.column_dimensions['A'].width = 30  # Employee Name
+        ws.column_dimensions['B'].width = 20  # Total Hours
+        ws.column_dimensions['C'].width = 20  # Task Count
+
+        # Add headers
+        headers = ['Employee Name', 'Total Hours', 'Total Tasks']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_aligned
+
+        # Add data for each employee
+        row = 2
+        for employee in employees:
+            # Get tasks for current month
+            monthly_tasks = Task.objects.filter(
+                employee=employee,
+                drafted=False,
+                created_at__year=current_year,
+                created_at__month=current_month
+            )
+
+            # Calculate totals
+            total_hours = monthly_tasks.aggregate(total=Sum('duration'))['total'] or 0
+            total_tasks = monthly_tasks.count()
+
+            # Add employee data
+            ws.cell(row=row, column=1, value=f"{employee.first_name} {employee.last_name}")
+            ws.cell(row=row, column=2, value=total_hours)
+            ws.cell(row=row, column=3, value=total_tasks)
+
+            # Center align the data
+            for col in range(1, 4):
+                ws.cell(row=row, column=col).alignment = center_aligned
+
+            row += 1
+
+        # Add department info at the top
+        department = Department.objects.get(id=pk)
+        ws.insert_rows(1, 2)
+        ws.merge_cells('A1:C1')
+        title_cell = ws.cell(row=1, column=1)
+        title_cell.value = f"{department.name} - Monthly Report"
+        title_cell.font = Font(bold=True, size=14)
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # Create the response
+        response = HttpResponse(
+            content_type='application/vnd.openpyxl-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename=department_report_{current_date.strftime("%Y_%m")}.xlsx'
+
+        # Save the workbook to the response
+        wb.save(response)
+        return response
+
+    except Exception as e:
+        print(f"Error generating report: {e}")
+        return Response(
+            {'error': 'Failed to generate report'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
